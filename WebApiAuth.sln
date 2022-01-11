@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data.Sql", "modules\Sql-Dat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.Data", "AuthApp\Infrastructure.Data\Infrastructure.Data.csproj", "{596F1B3C-95B7-4D91-893E-E5B98CB3EADF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "AuthApp\Application\Application.csproj", "{30A6E142-044C-4AB1-80AD-873BC3FC20DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,10 @@ Global
 		{596F1B3C-95B7-4D91-893E-E5B98CB3EADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{596F1B3C-95B7-4D91-893E-E5B98CB3EADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{596F1B3C-95B7-4D91-893E-E5B98CB3EADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30A6E142-044C-4AB1-80AD-873BC3FC20DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30A6E142-044C-4AB1-80AD-873BC3FC20DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30A6E142-044C-4AB1-80AD-873BC3FC20DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30A6E142-044C-4AB1-80AD-873BC3FC20DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -53,6 +59,7 @@ Global
 		{171EC4D3-5AC2-4F84-A4F2-5CD7E2B3CF55} = {9CE989FE-ADF8-48C8-8C77-AA7BA676948B}
 		{495A2931-869D-4518-B6EA-A3990D74E7A8} = {9CE989FE-ADF8-48C8-8C77-AA7BA676948B}
 		{596F1B3C-95B7-4D91-893E-E5B98CB3EADF} = {6A0B33D1-F7CF-4756-AC35-6D1A61966778}
+		{30A6E142-044C-4AB1-80AD-873BC3FC20DC} = {6A0B33D1-F7CF-4756-AC35-6D1A61966778}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {362615EA-31E1-4983-9952-104E5BC4E96F}

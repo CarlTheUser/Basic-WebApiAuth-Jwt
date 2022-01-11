@@ -8,7 +8,7 @@ using System.Data.Common;
 
 namespace Infrastructure.Data.Access
 {
-    public class UserAccessRepository : IAsyncRepository<Guid, UserAccess?>
+    public class UserAccessRepository : IRepository<Guid, UserAccess?>, IQuery<UserAccess?, Guid>
     {
         private readonly ISqlProvider _provider;
         private readonly ISqlCaller _caller;
@@ -18,25 +18,23 @@ namespace Infrastructure.Data.Access
             _caller = new SqlCaller(_provider = new SqlServerProvider(connection));
         }
 
-        public async Task<UserAccess?> FindAsync(Guid key, CancellationToken token)
+        public UserAccess? Execute(Guid parameter)
         {
-            string query = $"Select UA.Id, UA.Email, UA.[Role] As RoleId, AR.[Description] As RoleDescription, UA.Salt, UA.[Hash] From UserAccesses UA Join AccessRoles AR On UA.[Role] = AR.Id Where UA.Id='{key}' ";
-
-            IEnumerable<DataHolder> items = await _caller.GetAsync(new ReflectionDataMapper<DataHolder>(), query, token);
-
-            return (from item in items
-                    select UserAccess.Existing(
-                        item.Id,
-                        item.Email,
-                        new Role(
-                            item.RoleId,
-                            item.RoleDescription),
-                        new SecurePassword(
-                            item.Salt, 
-                            item.Hash))).FirstOrDefault();
+            return new UserAccessSqlQuery(_provider, _caller)
+                .Filter(UserAccessSqlQuery.IdFilter(parameter))
+                .Execute()
+                .FirstOrDefault();
         }
 
-        public async Task SaveAsync(UserAccess? item, CancellationToken token)
+        public UserAccess? Find(Guid key)
+        {
+            return new UserAccessSqlQuery(_provider, _caller)
+               .Filter(UserAccessSqlQuery.IdFilter(key))
+               .Execute()
+               .FirstOrDefault();
+        }
+
+        public void Save(UserAccess? item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -51,26 +49,26 @@ namespace Infrastructure.Data.Access
                     switch (@event)
                     {
                         case UserAccessCreatedDataEvent uacde:
-                            await WriteEvent(uacde, transaction, token);
+                            WriteEvent(uacde, transaction);
                             break;
                         case PasswordChangedDataEvent pcde:
-                            await WriteEvent(pcde, transaction, token);
+                            WriteEvent(pcde, transaction);
                             break;
                         case RoleChangedDataEvent rcde:
-                            await WriteEvent(rcde, transaction, token);
+                            WriteEvent(rcde, transaction);
                             break;
                     }
                 }
 
-                await transaction.CommitAsync(token);
+                transaction.Commit();
             }
             catch
             {
-                await transaction.RollbackAsync(token);
+                transaction.Rollback();
             }
         }
 
-        private async Task WriteEvent(UserAccessCreatedDataEvent @event, SqlTransaction transaction, CancellationToken token)
+        private void WriteEvent(UserAccessCreatedDataEvent @event, SqlTransaction transaction)
         {
             DbCommand command = _provider.CreateCommand(
                 $"Insert Into UserAccesses(Id,Email,[Role],Salt,[Hash])Values('{@event.User}',@Email,'{@event.Role}',@Salt,@Hash) ",
@@ -83,10 +81,10 @@ namespace Infrastructure.Data.Access
                         @event.Hash
                     }, "@"));
 
-            await transaction.ExecuteNonQueryAsync(command, token);
+            transaction.ExecuteNonQuery(command);
         }
 
-        private async Task WriteEvent(PasswordChangedDataEvent @event, SqlTransaction transaction, CancellationToken token)
+        private void WriteEvent(PasswordChangedDataEvent @event, SqlTransaction transaction)
         {
             DbCommand command = _provider.CreateCommand(
                 $"Update UserAccesses Set Salt=@Salt,[Hash]=@Hash Where Id='{@event.User}' ",
@@ -98,12 +96,12 @@ namespace Infrastructure.Data.Access
                         @event.Hash
                     }, "@"));
 
-            await transaction.ExecuteNonQueryAsync(command, token);
+            transaction.ExecuteNonQuery(command);
         }
 
-        private async Task WriteEvent(RoleChangedDataEvent @event, SqlTransaction transaction, CancellationToken token)
+        private void WriteEvent(RoleChangedDataEvent @event, SqlTransaction transaction)
         {
-            await transaction.ExecuteNonQueryAsync($"Update UserAccesses Set [Role]='{@event.Role}' Where Id='{@event.User}' ", token);
+            transaction.ExecuteNonQuery($"Update UserAccesses Set [Role]='{@event.Role}' Where Id='{@event.User}' ");
         }
 
         private class DataHolder
