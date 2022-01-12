@@ -7,17 +7,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{9CE9
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AuthApp", "AuthApp", "{6A0B33D1-F7CF-4756-AC35-6D1A61966778}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "AuthApp\Web\Web.csproj", "{098DDE62-9E74-4C17-9035-487A536860D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web", "AuthApp\Web\Web.csproj", "{098DDE62-9E74-4C17-9035-487A536860D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Access", "AuthApp\Access\Access.csproj", "{F65E744F-6FEE-4D0D-B205-44E1C97CE71B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Access", "AuthApp\Access\Access.csproj", "{F65E744F-6FEE-4D0D-B205-44E1C97CE71B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data.Common.Contracts", "modules\Data-Common-Contracts-Net-Core\Data.Common.Contracts\Data.Common.Contracts.csproj", "{171EC4D3-5AC2-4F84-A4F2-5CD7E2B3CF55}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data.Sql", "modules\Sql-Data-Access-Tool-Wrapper-Net-Core\Data.Sql\Data.Sql.csproj", "{495A2931-869D-4518-B6EA-A3990D74E7A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.Data", "AuthApp\Infrastructure.Data\Infrastructure.Data.csproj", "{596F1B3C-95B7-4D91-893E-E5B98CB3EADF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure.Data", "AuthApp\Infrastructure.Data\Infrastructure.Data.csproj", "{596F1B3C-95B7-4D91-893E-E5B98CB3EADF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "AuthApp\Application\Application.csproj", "{30A6E142-044C-4AB1-80AD-873BC3FC20DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "AuthApp\Application\Application.csproj", "{30A6E142-044C-4AB1-80AD-873BC3FC20DC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A9419F63-90F4-4F27-96F5-590ED018B5FD}"
+	ProjectSection(SolutionItems) = preProject
+		UserAccessManagementDb Creation.sql = UserAccessManagementDb Creation.sql
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

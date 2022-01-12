@@ -8,7 +8,7 @@ using System.Data.Common;
 
 namespace Infrastructure.Data.Access
 {
-    public class UserAccessRepository : IRepository<Guid, UserAccess?>, IQuery<UserAccess?, Guid>
+    public class UserAccessRepository : IAsyncRepository<Guid, UserAccess?>, IAsyncQuery<UserAccess?, Guid>
     {
         private readonly ISqlProvider _provider;
         private readonly ISqlCaller _caller;
@@ -18,23 +18,23 @@ namespace Infrastructure.Data.Access
             _caller = new SqlCaller(_provider = new SqlServerProvider(connection));
         }
 
-        public UserAccess? Execute(Guid parameter)
+        public async Task<UserAccess?> ExecuteAsync(Guid parameter, CancellationToken token)
         {
-            return new UserAccessSqlQuery(_provider, _caller)
+            return (await new UserAccessSqlQuery(_provider, _caller)
                 .Filter(UserAccessSqlQuery.IdFilter(parameter))
-                .Execute()
+                .ExecuteAsync(token))
                 .FirstOrDefault();
         }
 
-        public UserAccess? Find(Guid key)
+        public async Task<UserAccess?> FindAsync(Guid key, CancellationToken token)
         {
-            return new UserAccessSqlQuery(_provider, _caller)
+            return (await new UserAccessSqlQuery(_provider, _caller)
                .Filter(UserAccessSqlQuery.IdFilter(key))
-               .Execute()
+               .ExecuteAsync(token))
                .FirstOrDefault();
         }
 
-        public void Save(UserAccess? item)
+        public async Task SaveAsync(UserAccess? item, CancellationToken token)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -49,26 +49,26 @@ namespace Infrastructure.Data.Access
                     switch (@event)
                     {
                         case UserAccessCreatedDataEvent uacde:
-                            WriteEvent(uacde, transaction);
+                            await WriteEvent(uacde, transaction, token);
                             break;
                         case PasswordChangedDataEvent pcde:
-                            WriteEvent(pcde, transaction);
+                            await WriteEvent(pcde, transaction, token);
                             break;
                         case RoleChangedDataEvent rcde:
-                            WriteEvent(rcde, transaction);
+                            await WriteEvent(rcde, transaction, token);
                             break;
                     }
                 }
 
-                transaction.Commit();
+                await transaction.CommitAsync(token);
             }
             catch
             {
-                transaction.Rollback();
+                await transaction.RollbackAsync(token);
             }
         }
 
-        private void WriteEvent(UserAccessCreatedDataEvent @event, SqlTransaction transaction)
+        private async Task WriteEvent(UserAccessCreatedDataEvent @event, SqlTransaction transaction, CancellationToken token)
         {
             DbCommand command = _provider.CreateCommand(
                 $"Insert Into UserAccesses(Id,Email,[Role],Salt,[Hash])Values('{@event.User}',@Email,'{@event.Role}',@Salt,@Hash) ",
@@ -81,10 +81,10 @@ namespace Infrastructure.Data.Access
                         @event.Hash
                     }, "@"));
 
-            transaction.ExecuteNonQuery(command);
+            await transaction.ExecuteNonQueryAsync(command, token);
         }
 
-        private void WriteEvent(PasswordChangedDataEvent @event, SqlTransaction transaction)
+        private async Task WriteEvent(PasswordChangedDataEvent @event, SqlTransaction transaction, CancellationToken token)
         {
             DbCommand command = _provider.CreateCommand(
                 $"Update UserAccesses Set Salt=@Salt,[Hash]=@Hash Where Id='{@event.User}' ",
@@ -96,12 +96,12 @@ namespace Infrastructure.Data.Access
                         @event.Hash
                     }, "@"));
 
-            transaction.ExecuteNonQuery(command);
+            await transaction.ExecuteNonQueryAsync(command, token);
         }
 
-        private void WriteEvent(RoleChangedDataEvent @event, SqlTransaction transaction)
+        private async Task WriteEvent(RoleChangedDataEvent @event, SqlTransaction transaction, CancellationToken token)
         {
-            transaction.ExecuteNonQuery($"Update UserAccesses Set [Role]='{@event.Role}' Where Id='{@event.User}' ");
+            await transaction.ExecuteNonQueryAsync($"Update UserAccesses Set [Role]='{@event.Role}' Where Id='{@event.User}' ", token);
         }
 
         private class DataHolder

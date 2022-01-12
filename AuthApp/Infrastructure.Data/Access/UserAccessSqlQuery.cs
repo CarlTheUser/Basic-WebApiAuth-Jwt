@@ -8,7 +8,7 @@ using System.Data.Common;
 
 namespace Infrastructure.Data.Access
 {
-    internal class UserAccessSqlQuery : SqlQuery<UserAccess>
+    internal class UserAccessSqlQuery : AsyncSqlQuery<UserAccess>
     {
         public static QueryFilter IdFilter(Guid id) => new _IdFilter(id);
 
@@ -31,7 +31,7 @@ namespace Infrastructure.Data.Access
             _caller = caller;
         }
 
-        public override IEnumerable<UserAccess> Execute()
+        public override async Task<IEnumerable<UserAccess>> ExecuteAsync(CancellationToken token)
         {
             string query = BASE_QUERY;
 
@@ -50,7 +50,7 @@ namespace Infrastructure.Data.Access
 
             DbCommand command = _provider.CreateCommand(query, CommandType.Text, parameters);
 
-            IEnumerable<DataHolder> items = _caller.Get(new ReflectionDataMapper<DataHolder>(), command);
+            IEnumerable<DataHolder> items = await _caller.GetAsync(new ReflectionDataMapper<DataHolder>(), command, token);
 
             return from item in items
                    select UserAccess.Existing(

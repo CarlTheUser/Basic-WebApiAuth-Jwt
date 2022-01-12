@@ -3,7 +3,7 @@ using Data.Common.Contracts;
 
 namespace Infrastructure.Data.Access
 {
-    public class UserAccessByEmailQuery : IQuery<UserAccess?, string>
+    public class UserAccessByEmailQuery : IAsyncQuery<UserAccess?, string>
     {
         private readonly string _connection;
 
@@ -12,11 +12,11 @@ namespace Infrastructure.Data.Access
             _connection = connection;
         }
 
-        public UserAccess? Execute(string parameter)
+        public async Task<UserAccess?> ExecuteAsync(string parameter, CancellationToken token)
         {
-            return new UserAccessSqlQuery(_connection)
+            return (await new UserAccessSqlQuery(_connection)
                .Filter(UserAccessSqlQuery.EmailFilter(parameter))
-               .Execute()
+               .ExecuteAsync(token))
                .FirstOrDefault();
         }
     }
