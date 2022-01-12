@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\modules\Sql-Data-Access-Tool-Wrapper-Net-Core\Data.Sql\Data.Sql.csproj" />
     <ProjectReference Include="..\Access\Access.csproj" />
+    <ProjectReference Include="..\Infrastructure.Data\Infrastructure.Data.csproj" />
   </ItemGroup>
 
 </Project>

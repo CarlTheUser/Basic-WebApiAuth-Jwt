@@ -17,7 +17,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public IActionResult Token(AuthTokenBindingModel model)
+        public async Task<IActionResult> Token(AuthTokenBindingModel model, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(model.grant_type) || model.grant_type.ToUpper() != "PASSWORD")
             {
@@ -29,10 +29,10 @@ namespace Web.Controllers
                 return Unauthorized();
             }
 
-            var result = _authentication.Authenticate(
+            var result = await _authentication.AuthenticateAsync(
                    new EmailPasswordAuthCredentials(
                        model.Username,
-                       model.Password));
+                       model.Password), token);
 
             switch (result.Status)
             {
