@@ -7,17 +7,17 @@ namespace Application.Authentication
     public class EmailPasswordAuthentication : IAuthentication<EmailPasswordAuthCredentials>
     {
         private readonly IConfiguration _configuration;
-        private readonly IQuery<UserAccess?, string> _userAccessByEmailquery;
+        private readonly IAsyncQuery<UserAccess?, string> _userAccessByEmailquery;
 
-        public EmailPasswordAuthentication(IConfiguration configuration, IQuery<UserAccess?, string> userAccessByEmailquery)
+        public EmailPasswordAuthentication(IConfiguration configuration, IAsyncQuery<UserAccess?, string> userAccessByEmailquery)
         {
             _configuration = configuration;
             _userAccessByEmailquery = userAccessByEmailquery;
         }
 
-        public AuthenticationResult Authenticate(EmailPasswordAuthCredentials credentials)
+        public async Task<AuthenticationResult> AuthenticateAsync(EmailPasswordAuthCredentials credentials, CancellationToken token)
         {
-            UserAccess? userAccess = _userAccessByEmailquery.Execute(credentials.Email);
+            UserAccess? userAccess = await _userAccessByEmailquery.ExecuteAsync(credentials.Email, token);
 
             if (userAccess != null)
             {

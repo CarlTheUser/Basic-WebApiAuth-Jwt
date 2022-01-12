@@ -2,6 +2,6 @@
 {
     public interface IAuthentication<TCredentials> where TCredentials : IAuthCredentials
     {
-        AuthenticationResult Authenticate(TCredentials credentials);
+        Task<AuthenticationResult> AuthenticateAsync(TCredentials credentials, CancellationToken token);
     }
 }
