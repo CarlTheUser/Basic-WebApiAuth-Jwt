@@ -1,3 +1,4 @@
+using Access;
 using Application;
 using Application.Authentication;
 using Data.Common.Contracts;
@@ -7,6 +8,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Misc.Utilities;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,7 +64,21 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
 
-//services.AddMediatR(typeof(Program).Assembly, typeof(AuthenticatedUser).Assembly);
+services.AddLogging(b =>
+{
+    var configuration = builder.Configuration;
+
+    b.AddSerilog(Log.Logger
+        = new LoggerConfiguration()
+        .Enrich.FromLogContext()
+        .MinimumLevel.Verbose()
+        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
+        .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
+        .WriteTo.Console()
+        .CreateLogger());
+});
+
+services.AddMediatR(typeof(Program).Assembly, typeof(AuthenticatedUser).Assembly);
 
 services.AddTransient<IAuthentication<EmailPasswordAuthCredentials>>(s =>
 {
@@ -75,6 +91,9 @@ services.AddTransient<IRandomStringGenerator, AbcRandomStringGenerator>();
 
 services.AddTransient<IAsyncRepository<Guid, RefreshToken>>(s => new RefreshTokenRepository(builder.Configuration.GetConnectionString("AccessManagementDb")));
 
+services.AddTransient<IAsyncQuery<UserAccess?, Guid>>(s => new UserAccessRepository(builder.Configuration.GetConnectionString("AccessManagementDb")));
+
+services.AddTransient<IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter>>(s => new RefreshTokenByUserValueQuery(builder.Configuration.GetConnectionString("AccessManagementDb")));
 
 var app = builder.Build();
 

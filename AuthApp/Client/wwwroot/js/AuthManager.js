@@ -111,10 +111,13 @@ var authManager = (function () {
         },
 
         tryRefreshToken: async function () {
-
-            if (getCookie('X-Can-Refresh') !== null) {
+            console.log(document.cookie);
+            const cookie = getCookie('X-Can-Refresh');
+            debugger;
+            if (cookie !== undefined && cookie !== null) {
 
                 const fetchResult = await fetch('https://localhost:7091/api/Auth/Re', {
+                    credentials: 'include',
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json'

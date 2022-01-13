@@ -3,8 +3,6 @@ using Data.Common.Contracts;
 
 namespace Infrastructure.Data.Application
 {
-    public record class RefreshTokenByUserValueParameter(Guid User, string Value);
-
     public class RefreshTokenByUserValueQuery : IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter>
     {
         private readonly string _connection;

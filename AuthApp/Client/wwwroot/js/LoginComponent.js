@@ -44,7 +44,8 @@ class LoginComponent extends HTMLElement {
         const loginButton = shadowRoot.querySelector('#loginButton');
 
         function onSuccess() {
-            window.location.href = "../Client/Weather.html";
+            //window.location.href = "../Client/Weather.html";
+            window.location.reload();
         }
 
         function onFailure() {
