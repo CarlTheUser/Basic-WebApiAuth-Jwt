@@ -24,7 +24,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		UserAccessManagementDb Creation.sql = UserAccessManagementDb Creation.sql
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevConsole", "AuthApp\DevConsole\DevConsole.csproj", "{623A7D75-5541-4602-A86B-FD3737E2BD92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevConsole", "AuthApp\DevConsole\DevConsole.csproj", "{623A7D75-5541-4602-A86B-FD3737E2BD92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misc.Utilities", "AuthApp\Misc.Utilities\Misc.Utilities.csproj", "{7CD4DE12-588F-4323-8D3B-CA986F008848}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +62,10 @@ Global
 		{623A7D75-5541-4602-A86B-FD3737E2BD92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{623A7D75-5541-4602-A86B-FD3737E2BD92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{623A7D75-5541-4602-A86B-FD3737E2BD92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CD4DE12-588F-4323-8D3B-CA986F008848}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CD4DE12-588F-4323-8D3B-CA986F008848}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CD4DE12-588F-4323-8D3B-CA986F008848}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CD4DE12-588F-4323-8D3B-CA986F008848}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +78,7 @@ Global
 		{596F1B3C-95B7-4D91-893E-E5B98CB3EADF} = {6A0B33D1-F7CF-4756-AC35-6D1A61966778}
 		{30A6E142-044C-4AB1-80AD-873BC3FC20DC} = {6A0B33D1-F7CF-4756-AC35-6D1A61966778}
 		{623A7D75-5541-4602-A86B-FD3737E2BD92} = {6A0B33D1-F7CF-4756-AC35-6D1A61966778}
+		{7CD4DE12-588F-4323-8D3B-CA986F008848} = {6A0B33D1-F7CF-4756-AC35-6D1A61966778}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {362615EA-31E1-4983-9952-104E5BC4E96F}

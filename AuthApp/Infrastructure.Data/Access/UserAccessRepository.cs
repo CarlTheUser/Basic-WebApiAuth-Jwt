@@ -8,7 +8,7 @@ using System.Data.Common;
 
 namespace Infrastructure.Data.Access
 {
-    public class UserAccessRepository : IAsyncRepository<Guid, UserAccess?>, IAsyncQuery<UserAccess?, Guid>
+    public class UserAccessRepository : IAsyncRepository<Guid, UserAccess>, IAsyncQuery<UserAccess?, Guid>
     {
         private readonly ISqlProvider _provider;
         private readonly ISqlCaller _caller;
@@ -34,10 +34,8 @@ namespace Infrastructure.Data.Access
                .FirstOrDefault();
         }
 
-        public async Task SaveAsync(UserAccess? item, CancellationToken token)
+        public async Task SaveAsync(UserAccess item, CancellationToken token)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
-
             var events = item.ReleaseEvents();
 
             SqlTransaction transaction = _caller.CreateScopedTransaction(IsolationLevel.ReadCommitted);
@@ -65,6 +63,8 @@ namespace Infrastructure.Data.Access
             catch
             {
                 await transaction.RollbackAsync(token);
+
+                throw;
             }
         }
 
@@ -102,16 +102,6 @@ namespace Infrastructure.Data.Access
         private async Task WriteEvent(RoleChangedDataEvent @event, SqlTransaction transaction, CancellationToken token)
         {
             await transaction.ExecuteNonQueryAsync($"Update UserAccesses Set [Role]='{@event.Role}' Where Id='{@event.User}' ", token);
-        }
-
-        private class DataHolder
-        {
-            public Guid Id { get; set; }
-            public string Email { get; set; } = string.Empty;
-            public Guid RoleId { get; set; }
-            public string RoleDescription { get; set; } = string.Empty;
-            public byte[] Salt { get; set; } = Array.Empty<byte>();
-            public byte[] Hash { get; set; } = Array.Empty<byte>();
         }
     }
 }

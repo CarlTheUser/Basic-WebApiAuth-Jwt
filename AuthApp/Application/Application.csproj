@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\modules\Data-Common-Contracts-Net-Core\Data.Common.Contracts\Data.Common.Contracts.csproj" />
     <ProjectReference Include="..\Access\Access.csproj" />
+    <ProjectReference Include="..\Misc.Utilities\Misc.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

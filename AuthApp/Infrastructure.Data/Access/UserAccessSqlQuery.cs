@@ -74,7 +74,7 @@ namespace Infrastructure.Data.Access
             public byte[] Hash { get; set; } = Array.Empty<byte>();
         }
 
-        public class _IdFilter : QueryFilter
+        private class _IdFilter : QueryFilter
         {
             public Guid Id { get; set; }
 
@@ -94,7 +94,7 @@ namespace Infrastructure.Data.Access
             }
         }
 
-        public class _EmailFilter : QueryFilter
+        private class _EmailFilter : QueryFilter
         {
             public string Email { get; set; } = string.Empty;
 

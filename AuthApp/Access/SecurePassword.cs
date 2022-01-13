@@ -50,7 +50,8 @@ namespace Access
         {
             UserAccessDomain.Require(() => !string.IsNullOrWhiteSpace(password), "Cannot create an empty password.");
 
-            Salt = CreateSalt(new RNGCryptoServiceProvider(), SALT_SIZE);
+            //Salt = CreateSalt(new RNGCryptoServiceProvider(), SALT_SIZE);
+            Salt = CreateSalt(RandomNumberGenerator.Create(), SALT_SIZE);
             Value = CalculateHash(Salt, peanuts + password);
         }
 

@@ -39,6 +39,8 @@ Values
 (NewId(), 'User Administrator'),
 (NewId(), 'Resource Consumer')
 
+
+--Create Job that will delete expired Refresh Tokens
 Create Table CurrentRefreshTokens
 (
 	Id UniqueIdentifier Primary Key Nonclustered,
