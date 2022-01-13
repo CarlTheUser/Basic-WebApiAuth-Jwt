@@ -1,11 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Access;
-using Data.Common.Contracts;
 using Data.Sql;
 using Data.Sql.Provider;
 using Infrastructure.Data.Access;
 
-Console.WriteLine("Hello, World!");
 
 const string localConnectionString = @"Data Source='DESKTOP-U64U4KB\SQLEXPRESS';Initial Catalog=UserAccessManagementDb;User ID=sa;Password=password;";
 
@@ -18,7 +16,7 @@ static void InitializeUserAccess()
         role: administrator,
         password: new SecurePassword(
             peanuts: "long vanguard map intermediary address sun honky mason",
-            password: "K1mD4hYun<3"));
+            password: "K1mD4hYun0528<3"));
 
     var repository = new UserAccessRepository(localConnectionString);
 
@@ -35,3 +33,7 @@ static Guid GetAdministratorRole()
 
     return (Guid)(guid ?? throw new Exception("Run UserAccessManagementDb Creation.sql first"));
 }
+
+Console.WriteLine("Hello, World!");
+
+InitializeUserAccess();

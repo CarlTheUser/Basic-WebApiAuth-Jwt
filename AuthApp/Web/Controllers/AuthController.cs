@@ -1,11 +1,15 @@
 ﻿using Application;
 using Application.Authentication;
 using Data.Common.Contracts;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.IdentityModel.Tokens;
 using Misc.Utilities;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 using Web.Models;
@@ -16,27 +20,17 @@ namespace Web.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly IMediator _mediator;
 
-        private readonly IAuthentication<EmailPasswordAuthCredentials> _authentication;
-
-        private readonly IRandomStringGenerator _stringGenerator;
-
-        private readonly IAsyncRepository<Guid, RefreshToken> _refreshTokenRepository;
-
-        public AuthController(
-            IConfiguration configuration, 
-            IAuthentication<EmailPasswordAuthCredentials> authentication, 
-            IRandomStringGenerator stringGenerator, 
-            IAsyncRepository<Guid, RefreshToken> refreshTokenRepository)
+        public AuthController(IMediator mediator)
         {
-            _configuration = configuration;
-            _authentication = authentication;
-            _stringGenerator = stringGenerator;
-            _refreshTokenRepository = refreshTokenRepository;
+            _mediator = mediator;
         }
 
+        [AllowAnonymous]
+        [Route("Token")]
         [HttpPost]
+        [TypeFilter(typeof(AuthExceptionFilter))]
         public async Task<IActionResult> Token(AuthTokenBindingModel model, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(model.grant_type) || model.grant_type.ToUpper() != "PASSWORD")
@@ -49,63 +43,41 @@ namespace Web.Controllers
                 return Unauthorized();
             }
 
-            var result = await _authentication.AuthenticateAsync(
-                   new EmailPasswordAuthCredentials(
-                       model.Username,
-                       model.Password), token);
+            TokenResponse tokenResponse = await _mediator.Send(
+                new AuthenticateRequest(
+                    new EmailPasswordAuthCredentials(model.Username, model.Password),
+                    Response));
+            
+            return Ok(tokenResponse);
+        }
 
-            switch (result.Status)
+        [Authorize]
+        [Route("Re")]
+        [HttpPost]
+        public async Task<IActionResult> Re(CancellationToken token)
+        {
+            if(Request.Cookies.TryGetValue("X-Refresh-Token", out string? refreshToken) && Request.Cookies.TryGetValue("X-User-Id", out string? userId))
             {
-                case AuthenticationStatus.Ok:
 
-                    AuthenticatedUser user = ((Application.Authentication.OkResult)result).User;
-
-                    var refreshToken = RefreshToken.For(
-                        user: user.Id,
-                        lifespan: TimeSpan.Parse(_configuration[""]),
-                        _stringGenerator,
-                        _configuration.GetValue<int>(""));
-
-                    await _refreshTokenRepository.SaveAsync(refreshToken, token);
-
-                    SecurityKey symmetricKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-                    SigningCredentials credentials = new(symmetricKey, SecurityAlgorithms.HmacSha256);
-
-                    List<Claim> claims = new()
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                        new Claim(ClaimTypes.Email, user.Email),
-                        new Claim(ClaimTypes.Role, user.Role)
-                    };
-
-                    DateTime now = DateTime.Now;
-
-                    DateTime accessTokenExpiry = now.Add(TimeSpan.FromMinutes(20));
-
-                    SecurityToken securityToken = new JwtSecurityToken(
-                            issuer: _configuration["Jwt:Issuer"],
-                            audience: _configuration["Jwt:Issuer"],
-                            claims: claims,
-                            expires: accessTokenExpiry,
-                            signingCredentials: credentials);
-
-                    string encodedToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-
-                    return Ok(
-                        new{
-                            access_token = encodedToken,
-                            access_token_expires = accessTokenExpiry,
-                            refreshToken = refreshToken.Value,
-                            refresh_token_expires = refreshToken.Expiry
-                        });
-
-                case AuthenticationStatus.NotFound:
-                    return Unauthorized();
-                case AuthenticationStatus.InvalidCredentials:
-                    return Unauthorized();
             }
 
             return Unauthorized();
+        }
+
+        public class AuthExceptionFilter : IExceptionFilter
+        {
+            public void OnException(ExceptionContext context)
+            {
+                switch (context.Exception)
+                {
+                    case Application.ApplicationException ae:
+                        context.Result = new UnauthorizedObjectResult(new { ae.Message });
+                        break;
+                    default:
+                        context.Result = new StatusCodeResult((int)HttpStatusCode.InternalServerError);
+                        break;
+                }
+            }
         }
     }
 }

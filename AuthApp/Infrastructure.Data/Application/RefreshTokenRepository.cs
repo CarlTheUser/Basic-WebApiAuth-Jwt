@@ -60,12 +60,12 @@ namespace Infrastructure.Data.Application
         private async Task WriteEvent(RefreshTokenIssuedDataEvent @event, SqlTransaction transaction, CancellationToken token)
         {
             DbCommand command = _provider.CreateCommand(
-                $"Insert Into CurrentRefreshTokens(Id,[User],Token,Issued,Expiry)Values('{@event.Id}','{@event.IssuedTo}',@Token',@Issued,@Expiry) ",
+                $"Insert Into CurrentRefreshTokens(Id,[User],Token,Issued,Expiry)Values('{@event.Id}','{@event.IssuedTo}',@Token,@Issued,@Expiry) ",
                 CommandType.Text,
                 _provider.CreateInputParameters(
                     new
                     {
-                        @event.Value,
+                        Token = @event.Value,
                         @event.Issued,
                         @event.Expiry
                     }, "@"));

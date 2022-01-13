@@ -1,0 +1,98 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hello, world!</title>
+    <style>
+        .weathers-container {
+            display: flex;
+            justify-content: flex-start;
+            align-items: stretch;
+            align-content: flex-start;
+            gap: 10px;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .weather-item {
+            border: 1px solid #6e6e6e;
+            padding: 16px;
+            width: 150px;
+            border-radius: 3px;
+        }
+
+        .weather-item .temp{
+            font-size:3em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello, world!</h1>
+
+    <div id="weathersContainer" class="weathers-container">
+
+    </div>
+    <script src="wwwroot/js/AuthManager.js"></script>
+    <script src="wwwroot/js/WeatherItem.js"></script>
+    <script>
+
+        let token = null;
+        let weathersContainer = null;
+
+        const loadingView = document.createElement('div');
+        const errorView = document.createElement('div');
+
+        document.addEventListener("DOMContentLoaded", async function () {
+
+            loadingView.innerHTML = '<span style="font-size:5em;">l o a d i n g</span>';
+
+            weathersContainer = document.getElementById('weathersContainer');
+
+            token = authManager.getToken();
+
+            console.log(token);
+
+            weathersContainer.appendChild(loadingView);
+
+            const weatherResponse = await fetch('https://localhost:7091/WeatherForecast', {
+                method: 'GET',
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (weatherResponse.ok) {
+
+                const weathersJson = await weatherResponse.json();
+
+                const fragment = document.createDocumentFragment();
+
+                let weatherItem = null;
+
+                weathersJson.foreach(function (item) {
+
+                    weatherItem = document.createElement('weather-item');
+
+                    weatherItem.temperature = `${item.temperatureC} C`;
+                    weatherItem.summary = item.summary;
+
+                    fragment.appendChild(weatherItem);
+
+                });
+
+                weathersContainer.removeChild(loadingView);
+
+                weathersContainer.appendChild(fragment);
+            } else {
+                weathersContainer.removeChild(loadingView);
+                weathersContainer.appendChild(errorView);                
+            }
+
+        });
+
+    </script>
+</body>
+</html>

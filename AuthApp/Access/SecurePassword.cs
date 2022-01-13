@@ -3,7 +3,7 @@
 
 namespace Access
 {
-    public class SecurePassword : IDisposable
+    public class SecurePassword : IHaveSensitiveData
     {
         #region Static Constants
 
@@ -40,9 +40,11 @@ namespace Access
 
         #endregion
 
-        public byte[] Salt { get; private set; }
+        public byte[] Salt { get; }
 
-        public byte[] Value { get; private set; }
+        public byte[] Value { get; }
+
+        private bool _isFlushed = false;
 
         #region Constructors
 
@@ -65,7 +67,11 @@ namespace Access
 
         public bool Test(string password)
         {
-            using (SecurePassword testConverted = new(Salt.ToArray(), CalculateHash(Salt, password)))
+            UserAccessDomain.Require(() => !_isFlushed, $"Cannot Test a flushed instance of {typeof(SecurePassword).Name}.");
+
+            SecurePassword testConverted = new(Salt.ToArray(), CalculateHash(Salt, password));
+
+            try
             {
                 bool mismatched = false;
 
@@ -86,20 +92,17 @@ namespace Access
 
                 return !mismatched;
             }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
+            finally
             {
-                Array.Clear(Salt, 0, Salt.Length);
-                Array.Clear(Value, 0, Value.Length);
+                testConverted.Flush();
             }
+        }
+
+        public void Flush()
+        {
+            Array.Clear(Salt, 0, Salt.Length);
+            Array.Clear(Value, 0, Value.Length);
+            _isFlushed = true;
         }
     }
 }

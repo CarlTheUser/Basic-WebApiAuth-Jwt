@@ -21,7 +21,7 @@ namespace Application.Authentication
 
             if (userAccess != null)
             {
-                if(userAccess.Password.Test(_configuration["Application:Authentication:Peanuts"] + new string(credentials.Password)))
+                if(userAccess.Password.Test(_configuration["Application:Security:Authentication:Peanuts"] + new string(credentials.Password)))
                 {
                     return AuthenticationResult.Ok(
                         new AuthenticatedUser(

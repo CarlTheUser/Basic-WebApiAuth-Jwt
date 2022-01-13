@@ -1,7 +1,9 @@
-﻿namespace Application.Authentication
+﻿using Access;
+
+namespace Application.Authentication
 {
-    public interface IAuthCredentials
+    public interface IAuthCredentials : IHaveSensitiveData
     {
-        void Flush();
+
     }
 }
