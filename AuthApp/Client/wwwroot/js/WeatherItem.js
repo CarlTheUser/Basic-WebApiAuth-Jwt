@@ -1,4 +1,4 @@
-﻿class WeatherItem {
+﻿class WeatherItem extends HTMLElement {
 
     static get observedAttributes() { return ['data-temperature', 'data-summary']; }
 
@@ -8,25 +8,29 @@
         const template = document.createElement('template');
 
         template.innerHTML = `<style>
-                                .weather-item {
-                                    border: 1px solid #6e6e6e;
-                                    padding: 16px;
-                                    width: 150px;
-                                    border-radius: 3px;
-                                }
+                                    .weather-item {
+                                        border: 1px solid #6e6e6e;
+                                        padding: 16px;
+                                        width: 150px;
+                                        border-radius: 3px;
+                                    }
 
-                                .weather-item .temp{
-                                    font-size:3em;
-                                }
+                                    .weather-item .temp{
+                                        font-size:3em;
+                                    }
                             </style>
                              <div class="weather-item">
                                 <span id="temparetureText" class="temp"></span>
                                 <br/>
                                 <span id="summaryText"></span>
                             </div>`;
+
+        const shadowRoot = this.attachShadow({ mode: 'open' });
+        shadowRoot.appendChild(template.content.cloneNode(true));
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
+
         switch (name) {
             case 'data-temperature':
                 this.shadowRoot.querySelector('#temparetureText').innerText = newValue;

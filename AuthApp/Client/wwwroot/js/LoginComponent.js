@@ -43,9 +43,8 @@ class LoginComponent extends HTMLElement {
         const serverFeedback = shadowRoot.querySelector('#serverFeedback');
         const loginButton = shadowRoot.querySelector('#loginButton');
 
-        function onSuccess() {
-            //window.location.href = "../Client/Weather.html";
-            window.location.reload();
+        this._onSuccess = function () {
+
         }
 
         function onFailure() {
@@ -60,7 +59,7 @@ class LoginComponent extends HTMLElement {
             await authManager.signIn(
                 usernameInput.value,
                 passwordInput.value,
-                onSuccess,
+                this._onSuccess,
                 onFailure);
 
             usernameInput.disabled = passwordInput.disabled = loginButton.disabled = false;
@@ -80,6 +79,14 @@ class LoginComponent extends HTMLElement {
         const root = this.shadowRoot;
 
         root.querySelector('#formOverFunction').removeEventListener('submit', this.functionOverForm);
+    }
+
+    set onSuccess(handler) {
+        this._onSuccess = handler;
+    }
+
+    get onSuccess() {
+        return this._onSuccess;
     }
 }
 

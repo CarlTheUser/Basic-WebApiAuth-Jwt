@@ -1,0 +1,62 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Api Access</title>
+    <style>
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            /*background-color:red;*/
+        }
+    </style>
+</head>
+<body>
+    <script src="wwwroot/js/AuthManager.js"></script>
+
+    <div id="mainContainer">
+        <div id="loginContainer" class="login-container">
+
+        </div>
+
+
+    </div>
+
+
+    <script src="wwwroot/js/LoginComponent.js"></script>
+    <script src="wwwroot/js/WeatherItem.js"></script>
+    <script src="wwwroot/js/WeatherView.js"></script>
+    <script src="wwwroot/js/domutil.js"></script>
+    <script>
+
+        async function main() {
+
+
+
+            const mainContainer = document.getElementById('mainContainer');
+            const loginContainer = document.getElementById('loginContainer');
+
+            const weatherview = document.createElement('weather-view');
+
+            const loginComponent = document.createElement('login-component');
+            loginComponent.onSuccess = function () {
+                mainContainer.removeChild(loginContainer);
+                mainContainer.appendChild(weatherview);
+            }
+            loginContainer.appendChild(loginComponent);
+
+
+
+        }
+
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            await main();
+        });
+
+    </script>
+</body>
+</html>

@@ -81,9 +81,6 @@ var authManager = (function () {
                         expiry: new Date(jsonResult.access_token_expires)
                     };
 
-                    console.log(jsonResult);
-                    console.log(currentToken);
-
                     onSuccess();
 
                 } else {
@@ -133,8 +130,6 @@ var authManager = (function () {
                         expiry: new Date(jsonResult.access_token_expires)
                     };
 
-                    console.log(jsonResult);
-                    console.log(currentToken);
 
                 } else {
 
@@ -146,8 +141,8 @@ var authManager = (function () {
     };
 })();
 
-if (!window.location.href.endsWith('/Client/Login.html')) {
-    authManager.tryRefreshToken();
-} else {
-    console.log('Login Page');
-}
+//if (!window.location.href.endsWith('/Client/Login.html')) {
+//    authManager.tryRefreshToken(); //no support for cookie for local .html files
+//} else {
+//    console.log('Login Page');
+//}
