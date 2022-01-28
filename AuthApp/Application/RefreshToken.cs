@@ -3,7 +3,7 @@ using Misc.Utilities;
 
 namespace Application
 {
-    public class RefreshToken : IEventStore
+    public class RefreshToken : IDataEventSource
     {
         public static RefreshToken For(Guid user, TimeSpan lifespan, IRandomStringGenerator generator, int tokenLength)
         {

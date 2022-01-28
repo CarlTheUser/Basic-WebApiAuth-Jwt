@@ -3,7 +3,7 @@
 namespace Access
 {
 
-    public class UserAccess : IEventStore
+    public class UserAccess : IDataEventSource
     {
         public static UserAccess New(string email, Role role, SecurePassword password)
         {

@@ -17,26 +17,33 @@ namespace Application.Authentication
 
         public async Task<AuthenticationResult> AuthenticateAsync(EmailPasswordAuthCredentials credentials, CancellationToken token)
         {
-            UserAccess? userAccess = await _userAccessByEmailquery.ExecuteAsync(credentials.Email, token);
-
-            if (userAccess != null)
+            try
             {
-                if(userAccess.Password.Test(_configuration["Application:Security:Authentication:Peanuts"] + new string(credentials.Password)))
+                UserAccess? userAccess = await _userAccessByEmailquery.ExecuteAsync(credentials.Email, token);
+
+                if (userAccess != null)
                 {
-                    return AuthenticationResult.Ok(
-                        new AuthenticatedUser(
-                            userAccess.Guid,
-                            userAccess.Email,
-                            userAccess.Role.Name));
+                    if (userAccess.Password.Test(_configuration["Application:Security:Authentication:Peanuts"] + new string(credentials.Password)))
+                    {
+                        return AuthenticationResult.Ok(
+                            new AuthenticatedUser(
+                                userAccess.Guid,
+                                userAccess.Email,
+                                userAccess.Role.Name));
+                    }
+                    else
+                    {
+                        return AuthenticationResult.InvalidCredentials(userAccess.Email);
+                    }
                 }
                 else
                 {
-                    return AuthenticationResult.InvalidCredentials(userAccess.Email);
+                    return AuthenticationResult.NotFound;
                 }
             }
-            else
+            finally
             {
-                return AuthenticationResult.NotFound;
+                credentials.Flush();
             }
         }
     }

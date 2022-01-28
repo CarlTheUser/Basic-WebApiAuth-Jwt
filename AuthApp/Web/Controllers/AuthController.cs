@@ -43,7 +43,7 @@ namespace Web.Controllers
             return Ok(tokenResponse);
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [Route("Re")]
         [HttpPost]
         public async Task<IActionResult> Re(CancellationToken token)

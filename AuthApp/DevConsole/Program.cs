@@ -11,12 +11,13 @@ static void InitializeUserAccess()
 {
     Role administrator = new Role(GetAdministratorRole(), "User Administrator");
 
+    string serverPeanuts = "long vanguard map intermediary address sun honky mason";
+
     UserAccess userAccess = UserAccess.New(
         email: "qazzqc@foo.company",
         role: administrator,
         password: new SecurePassword(
-            peanuts: "long vanguard map intermediary address sun honky mason",
-            password: "K1mD4hYun0528<3"));
+            password: serverPeanuts + "K1mD4hYun0528<3"));
 
     var repository = new UserAccessRepository(localConnectionString);
 

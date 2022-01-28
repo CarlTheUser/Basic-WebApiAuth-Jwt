@@ -5,13 +5,13 @@ namespace Access
 {
     public class SecurePassword : IHaveSensitiveData
     {
-        #region Static Constants
+        #region Constants
 
-        private static readonly int SALT_SIZE = 16;
+        private const int SALT_SIZE = 16;
 
-        private static readonly int HASH_SIZE = 20;
+        private const int HASH_SIZE = 20;
 
-        private static readonly int ITERATIONS = 10000;
+        private const int ITERATIONS = 10000;
 
         #endregion
 
@@ -48,13 +48,12 @@ namespace Access
 
         #region Constructors
 
-        public SecurePassword(string peanuts, string password)
+        public SecurePassword(string password)
         {
             UserAccessDomain.Require(() => !string.IsNullOrWhiteSpace(password), "Cannot create an empty password.");
 
-            //Salt = CreateSalt(new RNGCryptoServiceProvider(), SALT_SIZE);
             Salt = CreateSalt(RandomNumberGenerator.Create(), SALT_SIZE);
-            Value = CalculateHash(Salt, peanuts + password);
+            Value = CalculateHash(Salt, password);
         }
 
         public SecurePassword(byte[] salt, byte[] value)
