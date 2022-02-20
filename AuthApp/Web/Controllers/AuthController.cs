@@ -34,13 +34,41 @@ namespace Web.Controllers
                 return Unauthorized();
             }
 
-            TokenResponse tokenResponse = await _mediator.Send(
+            AuthenticateResponse authenticateResponse = await _mediator.Send(
                 new AuthenticateRequest(
-                    new EmailPasswordAuthCredentials(model.Username, model.Password),
-                    Response), 
+                    new EmailPasswordAuthCredentials(
+                        model.Username, 
+                        model.Password)), 
                 token);
-            
-            return Ok(tokenResponse);
+
+            DateTime cookieExpiry = authenticateResponse.RefreshTokenExpiry;
+
+            Response.Cookies.Append(
+                "X-Refresh-Token",
+                authenticateResponse.RefreshToken,
+                new CookieOptions()
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = cookieExpiry,
+                    Secure = true
+                });
+
+            Response.Cookies.Append(
+                "X-User-Id",
+                authenticateResponse.User.ToString(),
+                new CookieOptions()
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = cookieExpiry,
+                    Secure = true
+                });
+
+            return Ok(new
+            {
+                access_token = authenticateResponse.AccessToken
+            });
         }
 
         [AllowAnonymous]
@@ -52,13 +80,76 @@ namespace Web.Controllers
                 && Request.Cookies.TryGetValue("X-User-Id", out string? userIdString) 
                 && Guid.TryParse(userIdString, out Guid userId))
             {
-                TokenResponse tokenResponse = await _mediator.Send(
-                    new RefreshTokenRequest(userId, refreshToken!, Response),
+                AuthenticateResponse authenticateResponse = await _mediator.Send(
+                    new RefreshTokenRequest(userId, refreshToken!),
                     token);
 
-                return Ok(tokenResponse);
+                DateTime cookieExpiry = authenticateResponse.RefreshTokenExpiry;
+
+                Response.Cookies.Append(
+                    "X-Refresh-Token",
+                    authenticateResponse.RefreshToken,
+                    new CookieOptions()
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.None,
+                        Expires = cookieExpiry,
+                        Secure = true
+                    });
+
+                Response.Cookies.Append(
+                    "X-User-Id",
+                    authenticateResponse.User.ToString(),
+                    new CookieOptions()
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.None,
+                        Expires = cookieExpiry,
+                        Secure = true
+                    });
+
+                return Ok(new
+                {
+                    access_token = authenticateResponse.AccessToken
+                });
             }
-            return BadRequest();
+            return Unauthorized();
+        }
+
+        [AllowAnonymous]
+        [Route("Revoke")]
+        [HttpPost]
+        public async Task<IActionResult> Revoke(CancellationToken token)
+        {
+            if (Request.Cookies.TryGetValue("X-Refresh-Token", out string? refreshToken)
+                && Request.Cookies.TryGetValue("X-User-Id", out string? userIdString)
+                && Guid.TryParse(userIdString, out Guid userId))
+            {
+                await _mediator.Send(
+                    new VoidRefreshTokenRequest(userId, refreshToken!),
+                    token);
+            }
+
+            CookieOptions options = new()
+            {
+                Expires = DateTime.Today.AddDays(-60),
+                SameSite = SameSiteMode.None,
+                Secure = true,
+                HttpOnly = true,
+                Path = HttpContext.Request.PathBase
+            };
+
+            Response.Cookies.Append(
+                "X-Refresh-Token",
+                "",
+                options);
+
+            Response.Cookies.Append(
+                "X-User-Id",
+                "",
+                options);
+
+            return Ok();
         }
     }
 }

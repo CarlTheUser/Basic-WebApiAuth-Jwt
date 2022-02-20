@@ -1,7 +1,6 @@
 ﻿using Access;
 using Data.Common.Contracts;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Misc.Utilities;
@@ -11,11 +10,11 @@ using System.Text;
 
 namespace Application
 {
-    public record class RefreshTokenRequest(Guid User, string token, HttpResponse Response) : IRequest<TokenResponse>;
+    public record class RefreshTokenRequest(Guid User, string Token) : IRequest<AuthenticateResponse>;
 
     public record class RefreshTokenByUserValueParameter(Guid User, string Value);
 
-    public class RefreshTokenRequestHandler : IRequestHandler<RefreshTokenRequest, TokenResponse>
+    public class RefreshTokenRequestHandler : IRequestHandler<RefreshTokenRequest, AuthenticateResponse>
     {
         private readonly IConfiguration _configuration;
 
@@ -41,7 +40,7 @@ namespace Application
             _stringGenerator = stringGenerator;
         }
 
-        public async Task<TokenResponse> Handle(RefreshTokenRequest request, CancellationToken cancellationToken)
+        public async Task<AuthenticateResponse> Handle(RefreshTokenRequest request, CancellationToken cancellationToken)
         {
             UserAccess? user = await _userAccessByIdQuery.ExecuteAsync(request.User, cancellationToken);
 
@@ -51,7 +50,7 @@ namespace Application
             }
 
             RefreshToken? existingToken = await _refreshTokenByUserValueQuery.ExecuteAsync(
-                    new RefreshTokenByUserValueParameter(user.Guid, request.token),
+                    new RefreshTokenByUserValueParameter(user.Guid, request.Token),
                     cancellationToken);
 
             if (existingToken == null || existingToken.Expiry < DateTime.Now)
@@ -66,8 +65,8 @@ namespace Application
             var refreshToken = RefreshToken.For(
                         user: user.Guid,
                         lifespan: TimeSpan.Parse(_configuration["Application:Security:Authentication:RefreshToken:Lifespan"]),
-                        _stringGenerator,
-                        _configuration.GetValue<int>("Application:Security:Authentication:RefreshToken:Length"));
+                        generator: _stringGenerator,
+                        tokenLength: _configuration.GetValue<int>("Application:Security:Authentication:RefreshToken:Length"));
 
             await _refreshTokenRepository.SaveAsync(refreshToken, cancellationToken);
 
@@ -94,42 +93,12 @@ namespace Application
 
             string encodedToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
 
-            DateTime cookieExpiry = refreshToken.Expiry.ToUniversalTime();
-
-            request.Response.Cookies.Append(
-                "X-Refresh-Token",
-                refreshToken.Value,
-                new CookieOptions()
-                {
-                    HttpOnly = true,
-                    SameSite = SameSiteMode.None,
-                    Expires = cookieExpiry,
-                    Secure = true
-                });
-
-            request.Response.Cookies.Append(
-                "X-User-Id",
-                user.Guid.ToString(),
-                new CookieOptions()
-                {
-                    HttpOnly = true,
-                    SameSite = SameSiteMode.None,
-                    Expires = cookieExpiry,
-                    Secure = true
-                });
-
-            request.Response.Cookies.Append(
-               "X-Can-Refresh",
-               true.ToString(),
-               new CookieOptions()
-               {
-                   HttpOnly = false,
-                   SameSite = SameSiteMode.None,
-                   Expires = cookieExpiry,
-                   Secure = true
-               });
-
-            return new TokenResponse(encodedToken, accessTokenExpiry);
+            return new AuthenticateResponse(
+                User: user.Guid,
+                AccessToken: encodedToken,
+                AccessTokenExpiry: accessTokenExpiry,
+                RefreshToken: refreshToken.Value,
+                RefreshTokenExpiry: refreshToken.Expiry);
         }
     }
 }

@@ -26,7 +26,7 @@ static void InitializeUserAccess()
 
 static Guid GetAdministratorRole()
 {
-    SqlServerProvider sqlServerProvider = new SqlServerProvider(localConnectionString);
+    SqlServerProvider sqlServerProvider = new(localConnectionString);
 
     ISqlCaller caller = new SqlCaller(sqlServerProvider);
 

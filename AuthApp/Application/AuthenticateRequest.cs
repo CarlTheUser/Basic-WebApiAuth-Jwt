@@ -1,7 +1,6 @@
 ﻿using Application.Authentication;
 using Data.Common.Contracts;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Misc.Utilities;
@@ -11,9 +10,9 @@ using System.Text;
 
 namespace Application
 {
-    public record class AuthenticateRequest(EmailPasswordAuthCredentials Credentials, HttpResponse Response) : IRequest<TokenResponse>;
+    public record class AuthenticateRequest(EmailPasswordAuthCredentials Credentials) : IRequest<AuthenticateResponse>;
 
-    public class AuthenticateRequestHandler : IRequestHandler<AuthenticateRequest, TokenResponse>
+    public class AuthenticateRequestHandler : IRequestHandler<AuthenticateRequest, AuthenticateResponse>
     {
         private readonly IConfiguration _configuration;
 
@@ -35,7 +34,7 @@ namespace Application
             _refreshTokenRepository = refreshTokenRepository;
         }
 
-        public async Task<TokenResponse> Handle(AuthenticateRequest request, CancellationToken cancellationToken)
+        public async Task<AuthenticateResponse> Handle(AuthenticateRequest request, CancellationToken cancellationToken)
         {
             var result = await _authentication.AuthenticateAsync(request.Credentials, cancellationToken);
 
@@ -65,7 +64,12 @@ namespace Application
 
                     DateTime now = DateTime.Now;
 
-                    DateTime accessTokenExpiry = now.Add(TimeSpan.FromMinutes(20));
+                    if(!TimeSpan.TryParse("Application:Security:Authentication:Jwt:Lifespan", out TimeSpan tokenLifespan))
+                    {
+                        throw new ApplicationException("Missing or invalid configuration @ Application:Security:Authentication:Jwt:Lifespan.");
+                    }
+
+                    DateTime accessTokenExpiry = now.Add(tokenLifespan);
 
                     SecurityToken securityToken = new JwtSecurityToken(
                             issuer: _configuration["Application:Security:Authentication:Jwt:Issuer"],
@@ -76,42 +80,12 @@ namespace Application
 
                     string encodedToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
 
-                    DateTime cookieExpiry = refreshToken.Expiry.ToUniversalTime();
-
-                    request.Response.Cookies.Append(
-                        "X-Refresh-Token",
-                        refreshToken.Value,
-                        new CookieOptions()
-                        {
-                            HttpOnly = true,
-                            SameSite = SameSiteMode.None,
-                            Expires = cookieExpiry,
-                            Secure = true
-                        });
-
-                    request.Response.Cookies.Append(
-                        "X-User-Id",
-                        user.Id.ToString(),
-                        new CookieOptions()
-                        {
-                            HttpOnly = true,
-                            SameSite = SameSiteMode.None,
-                            Expires = cookieExpiry,
-                            Secure = true
-                        });
-
-                    request.Response.Cookies.Append(
-                       "X-Can-Refresh",
-                       true.ToString(),
-                       new CookieOptions()
-                       {
-                           HttpOnly = false,
-                           SameSite = SameSiteMode.None,
-                           Expires = cookieExpiry,
-                           Secure = true
-                       });
-
-                    return new TokenResponse(encodedToken, accessTokenExpiry);
+                    return new AuthenticateResponse(
+                        User: user.Id,
+                        AccessToken: encodedToken,
+                        AccessTokenExpiry: accessTokenExpiry,
+                        RefreshToken: refreshToken.Value,
+                        RefreshTokenExpiry: refreshToken.Expiry);
 
                 case AuthenticationStatus.NotFound:
                     throw new ApplicationException("Account not found.");
