@@ -8,7 +8,6 @@ using Web.Models;
 namespace Web.Controllers
 {
     [Route("api/[controller]")]
-    [TypeFilter(typeof(AuthExceptionFilter))]
     [ApiController]
     public class AuthController : ControllerBase
     {
