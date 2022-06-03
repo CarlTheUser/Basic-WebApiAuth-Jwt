@@ -1,13 +1,15 @@
 ﻿using Application;
+using Application.Repositories;
 using Data.Common.Contracts;
 using Data.Sql;
 using Data.Sql.Provider;
 using System.Data;
 using System.Data.Common;
+using static Application.Repositories.IRefreshTokenRepository;
 
 namespace Infrastructure.Data.Application
 {
-    public class RefreshTokenRepository : IAsyncRepository<Guid, RefreshToken>
+    public class RefreshTokenRepository : IRefreshTokenRepository
     {
         private readonly ISqlProvider _provider;
 
@@ -18,12 +20,20 @@ namespace Infrastructure.Data.Application
             _caller = new SqlCaller(_provider = new SqlServerProvider(connection));
         }
 
-        public async Task<RefreshToken?> FindAsync(Guid key, CancellationToken token)
+        public async Task<RefreshToken?> FindAsync(ISpecification specs, CancellationToken token)
         {
-            return (await new RefreshTokenSqlQuery(_provider, _caller)
-                .Filter(RefreshTokenSqlQuery.IdFilter(key))
-                .ExecuteAsync(token))
-                .FirstOrDefault();
+            RefreshTokenSqlQuery query = new (_provider, _caller);
+
+            return specs switch
+            {
+                IdSpecification ids => (await query.Filter(RefreshTokenSqlQuery.IdFilter(ids.Id))
+                                        .ExecuteAsync(token))
+                                        .FirstOrDefault(),
+                UserWithRefreshTokenSpecification uwrts => (await query.Filter(RefreshTokenSqlQuery.UserFilter(uwrts.User).And(RefreshTokenSqlQuery.ValueFilter(uwrts.RefreshToken)))
+                                        .ExecuteAsync(token))
+                                        .FirstOrDefault(),
+                _ => null,
+            };
         }
 
         public async Task SaveAsync(RefreshToken item, CancellationToken token)

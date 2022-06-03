@@ -13,7 +13,7 @@
 
         public void Flush()
         {
-            Array.Clear(Password, 0, Password.Length);
+            Array.Clear(array: Password, index: 0, length: Password.Length);
         }
     }
 }

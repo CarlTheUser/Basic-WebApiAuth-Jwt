@@ -1,4 +1,5 @@
-﻿using Data.Common.Contracts;
+﻿using Application.Repositories;
+using Data.Common.Contracts;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 
@@ -10,31 +11,32 @@ namespace Application
     {
         private readonly IConfiguration _configuration;
 
-        private readonly IAsyncRepository<Guid, RefreshToken> _refreshTokenRepository;
+        private readonly IAsyncRepository<RefreshToken> _refreshTokenRepository;
 
-        private readonly IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter> _refreshTokenByUserValueQuery;
-
-        public VoidRefreshTokenRequestHandler(IConfiguration configuration, IAsyncRepository<Guid, RefreshToken> refreshTokenRepository, IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter> refreshTokenByUserValueQuery)
+        public VoidRefreshTokenRequestHandler(
+            IConfiguration configuration, 
+            IAsyncRepository<RefreshToken> refreshTokenRepository)
         {
             _configuration = configuration;
             _refreshTokenRepository = refreshTokenRepository;
-            _refreshTokenByUserValueQuery = refreshTokenByUserValueQuery;
         }
 
         public async Task<Unit> Handle(VoidRefreshTokenRequest request, CancellationToken cancellationToken)
         {
-            RefreshToken? existingToken = await _refreshTokenByUserValueQuery.ExecuteAsync(
-                    new RefreshTokenByUserValueParameter(request.User, request.token),
-                    cancellationToken);
+            RefreshToken? existingToken = await _refreshTokenRepository.FindAsync(
+                specs: new IRefreshTokenRepository.UserWithRefreshTokenSpecification(
+                    User: request.User,
+                    RefreshToken: request.token),
+                token: cancellationToken);
 
             if (existingToken == null)
             {
-                throw new ApplicationLogicException("Invalid token.");
+                throw new ApplicationLogicException(message: "Invalid token.");
             }
 
             existingToken.Consume();
 
-            await _refreshTokenRepository.SaveAsync(existingToken, cancellationToken);
+            await _refreshTokenRepository.SaveAsync(item: existingToken, token: cancellationToken);
 
             return Unit.Value;
         }

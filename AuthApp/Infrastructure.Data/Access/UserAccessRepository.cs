@@ -1,15 +1,18 @@
 ﻿using Access;
+using Application.Repositories;
 using Data.Common.Contracts;
 using Data.Sql;
-using Data.Sql.Mapping;
 using Data.Sql.Provider;
 using System.Data;
 using System.Data.Common;
+using static Application.Repositories.IUserAccessRepository;
 
 namespace Infrastructure.Data.Access
 {
-    public class UserAccessRepository : IAsyncRepository<Guid, UserAccess>, IAsyncQuery<UserAccess?, Guid>
+    public class UserAccessRepository : IUserAccessRepository
     {
+        
+
         private readonly ISqlProvider _provider;
         private readonly ISqlCaller _caller;
 
@@ -18,20 +21,20 @@ namespace Infrastructure.Data.Access
             _caller = new SqlCaller(_provider = new SqlServerProvider(connection));
         }
 
-        public async Task<UserAccess?> ExecuteAsync(Guid parameter, CancellationToken token)
+        public async Task<UserAccess?> FindAsync(ISpecification specs, CancellationToken token)
         {
-            return (await new UserAccessSqlQuery(_provider, _caller)
-                .Filter(UserAccessSqlQuery.IdFilter(parameter))
-                .ExecuteAsync(token))
-                .FirstOrDefault();
-        }
+            UserAccessSqlQuery query = new(_provider, _caller);
 
-        public async Task<UserAccess?> FindAsync(Guid key, CancellationToken token)
-        {
-            return (await new UserAccessSqlQuery(_provider, _caller)
-               .Filter(UserAccessSqlQuery.IdFilter(key))
-               .ExecuteAsync(token))
-               .FirstOrDefault();
+            return specs switch
+            {
+                IdSpecification ids => (await query.Filter(UserAccessSqlQuery.IdFilter(ids.Id))
+                                        .ExecuteAsync(token))
+                                        .FirstOrDefault(),
+                EmailSpecification es => (await query.Filter(UserAccessSqlQuery.EmailFilter(es.Email))
+                                        .ExecuteAsync(token))
+                                        .FirstOrDefault(),
+                _ => null,
+            };
         }
 
         public async Task SaveAsync(UserAccess item, CancellationToken token)

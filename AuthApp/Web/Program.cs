@@ -35,7 +35,7 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = configuration["Application:Security:Authentication:Jwt:Issuer"],
             ValidAudience = "This Api",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Application:Security:Authentication:Jwt:SymmetricSecurityKey"]))
+            IssuerSigningKey = new SymmetricSecurityKey(key: Encoding.UTF8.GetBytes(configuration["Application:Security:Authentication:Jwt:SymmetricSecurityKey"]))
         };
 
         options.Events = new JwtBearerEvents()
@@ -102,11 +102,11 @@ services.AddTransient<IAuthentication<EmailPasswordAuthCredentials>>(s =>
 
 services.AddTransient<IRandomStringGenerator, AbcRandomStringGenerator>();
 
-services.AddTransient<IAsyncRepository<Guid, RefreshToken>>(s => new RefreshTokenRepository(builder.Configuration.GetConnectionString("AccessManagementDb")));
+services.AddTransient<IAsyncRepository<RefreshToken>>(s => new RefreshTokenRepository(builder.Configuration.GetConnectionString("AccessManagementDb")));
 
-services.AddTransient<IAsyncQuery<UserAccess?, Guid>>(s => new UserAccessRepository(builder.Configuration.GetConnectionString("AccessManagementDb")));
+//services.AddTransient<IAsyncQuery<UserAccess?, Guid>>(s => new UserAccessRepository(builder.Configuration.GetConnectionString("AccessManagementDb")));
 
-services.AddTransient<IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter>>(s => new RefreshTokenByUserValueQuery(builder.Configuration.GetConnectionString("AccessManagementDb")));
+//services.AddTransient<IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter>>(s => new RefreshTokenByUserValueQuery(builder.Configuration.GetConnectionString("AccessManagementDb")));
 
 var app = builder.Build();
 

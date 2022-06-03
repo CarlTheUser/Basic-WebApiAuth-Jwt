@@ -25,27 +25,47 @@ namespace Web.Controllers
         {
             if (string.IsNullOrWhiteSpace(model.grant_type) || model.grant_type.ToUpper() != "PASSWORD")
             {
-                return Unauthorized();
+                Response.ContentType = "application/problem+json";
+                Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+                return Unauthorized(new ProblemDetails()
+                {
+                    Type = $"{Request.Scheme}://{Request.Host}/errors/unauthorized-grant-type",
+                    Title = "Unauthorized",
+                    Detail = "Unsupported grant_type.",
+                    Instance = Request.Path,
+                    Status = Response.StatusCode
+                });
             }
 
             if (string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
             {
-                return Unauthorized();
+                Response.ContentType = "application/problem+json";
+                Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+                return Unauthorized(new ProblemDetails()
+                {
+                    Type = $"{Request.Scheme}://{Request.Host}/errors/unauthorized-credentials",
+                    Title = "Unauthorized",
+                    Detail = "Unsupported or incomplete credentials",
+                    Instance = Request.Path,
+                    Status = Response.StatusCode
+                });
             }
 
             AuthenticateResponse authenticateResponse = await _mediator.Send(
-                new AuthenticateRequest(
-                    new EmailPasswordAuthCredentials(
-                        model.Username, 
-                        model.Password)), 
+                request: new AuthenticateRequest(
+                    Credentials: new EmailPasswordAuthCredentials(
+                        email: model.Username, 
+                        password: model.Password)), 
                 token);
 
             DateTime cookieExpiry = authenticateResponse.RefreshTokenExpiry;
 
             Response.Cookies.Append(
-                "X-Refresh-Token",
-                authenticateResponse.RefreshToken,
-                new CookieOptions()
+                key: "X-Refresh-Token",
+                value: authenticateResponse.RefreshToken,
+                options: new CookieOptions()
                 {
                     HttpOnly = true,
                     SameSite = SameSiteMode.None,
@@ -54,9 +74,9 @@ namespace Web.Controllers
                 });
 
             Response.Cookies.Append(
-                "X-User-Id",
-                authenticateResponse.User.ToString(),
-                new CookieOptions()
+                key: "X-User-Id",
+                value: authenticateResponse.User.ToString(),
+                options: new CookieOptions()
                 {
                     HttpOnly = true,
                     SameSite = SameSiteMode.None,
@@ -86,9 +106,9 @@ namespace Web.Controllers
                 DateTime cookieExpiry = authenticateResponse.RefreshTokenExpiry;
 
                 Response.Cookies.Append(
-                    "X-Refresh-Token",
-                    authenticateResponse.RefreshToken,
-                    new CookieOptions()
+                    key: "X-Refresh-Token",
+                    value: authenticateResponse.RefreshToken,
+                    options: new CookieOptions()
                     {
                         HttpOnly = true,
                         SameSite = SameSiteMode.None,
@@ -97,9 +117,9 @@ namespace Web.Controllers
                     });
 
                 Response.Cookies.Append(
-                    "X-User-Id",
-                    authenticateResponse.User.ToString(),
-                    new CookieOptions()
+                    key: "X-User-Id",
+                    value: authenticateResponse.User.ToString(),
+                    options: new CookieOptions()
                     {
                         HttpOnly = true,
                         SameSite = SameSiteMode.None,
@@ -134,19 +154,18 @@ namespace Web.Controllers
                 Expires = DateTime.Today.AddDays(-60),
                 SameSite = SameSiteMode.None,
                 Secure = true,
-                HttpOnly = true,
-                Path = HttpContext.Request.PathBase
+                HttpOnly = true
             };
 
             Response.Cookies.Append(
-                "X-Refresh-Token",
-                "",
-                options);
+                key: "X-Refresh-Token",
+                value: string.Empty,
+                options: options);
 
             Response.Cookies.Append(
-                "X-User-Id",
-                "",
-                options);
+                key: "X-User-Id",
+                value: string.Empty,
+                options: options); ;
 
             return Ok();
         }

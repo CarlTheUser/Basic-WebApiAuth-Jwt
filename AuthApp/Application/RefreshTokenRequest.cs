@@ -1,4 +1,5 @@
 ﻿using Access;
+using Application.Repositories;
 using Data.Common.Contracts;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -18,49 +19,47 @@ namespace Application
     {
         private readonly IConfiguration _configuration;
 
-        private readonly IAsyncQuery<UserAccess?, Guid> _userAccessByIdQuery;
+        private readonly IAsyncRepository<UserAccess> _userAccessRepository;
 
-        private readonly IAsyncRepository<Guid, RefreshToken> _refreshTokenRepository;
-
-        private readonly IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter> _refreshTokenByUserValueQuery;
+        private readonly IAsyncRepository<RefreshToken> _refreshTokenRepository;
 
         private readonly IRandomStringGenerator _stringGenerator;
 
         public RefreshTokenRequestHandler(
             IConfiguration configuration,
-            IAsyncQuery<UserAccess?, Guid> userAccessByIdQuery, 
-            IAsyncRepository<Guid, RefreshToken> refreshTokenRepository, 
-            IAsyncQuery<RefreshToken?, RefreshTokenByUserValueParameter> refreshTokenByUserValueQuery, 
+            IAsyncRepository<UserAccess> userAccessRepository, 
+            IAsyncRepository<RefreshToken> refreshTokenRepository, 
             IRandomStringGenerator stringGenerator)
         {
             _configuration = configuration;
-            _userAccessByIdQuery = userAccessByIdQuery;
+            _userAccessRepository = userAccessRepository;
             _refreshTokenRepository = refreshTokenRepository;
-            _refreshTokenByUserValueQuery = refreshTokenByUserValueQuery;
             _stringGenerator = stringGenerator;
         }
 
         public async Task<AuthenticateResponse> Handle(RefreshTokenRequest request, CancellationToken cancellationToken)
         {
-            UserAccess? user = await _userAccessByIdQuery.ExecuteAsync(request.User, cancellationToken);
+            UserAccess? user = await _userAccessRepository.FindAsync(
+                specs: new IUserAccessRepository.IdSpecification(Id: request.User),
+                token: cancellationToken);
 
             if (user == null)
             {
-                throw new ApplicationLogicException("Cannot find user.");
+                throw new ApplicationLogicException(message: "Cannot find user.");
             }
 
-            RefreshToken? existingToken = await _refreshTokenByUserValueQuery.ExecuteAsync(
-                    new RefreshTokenByUserValueParameter(user.Guid, request.Token),
-                    cancellationToken);
+            RefreshToken? existingToken = await _refreshTokenRepository.FindAsync(
+                    specs: new IRefreshTokenRepository.UserWithRefreshTokenSpecification(User: user.Guid, RefreshToken: request.Token),
+                    token: cancellationToken);
 
             if (existingToken == null)
             {
-                throw new ApplicationLogicException("Invalid token.");
+                throw new ApplicationLogicException(message: "Invalid token.");
             }
 
             existingToken.Consume();
 
-            await _refreshTokenRepository.SaveAsync(existingToken, cancellationToken);
+            await _refreshTokenRepository.SaveAsync(item: existingToken, token: cancellationToken);
 
             var refreshToken = RefreshToken.For(
                         user: user.Guid,
@@ -68,21 +67,21 @@ namespace Application
                         generator: _stringGenerator,
                         tokenLength: _configuration.GetValue<int>("Application:Security:Authentication:RefreshToken:Length"));
 
-            await _refreshTokenRepository.SaveAsync(refreshToken, cancellationToken);
+            await _refreshTokenRepository.SaveAsync(item: refreshToken, token: cancellationToken);
 
-            SecurityKey symmetricKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Application:Security:Authentication:Jwt:SymmetricSecurityKey"]));
-            SigningCredentials credentials = new(symmetricKey, SecurityAlgorithms.HmacSha256);
+            SecurityKey symmetricKey = new SymmetricSecurityKey(key: Encoding.UTF8.GetBytes(_configuration["Application:Security:Authentication:Jwt:SymmetricSecurityKey"]));
+            SigningCredentials credentials = new(key: symmetricKey, algorithm: SecurityAlgorithms.HmacSha256);
 
             List<Claim> claims = new()
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Guid.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.Name)
+                new Claim(type: ClaimTypes.NameIdentifier, value: user.Guid.ToString()),
+                new Claim(type: ClaimTypes.Email, value: user.Email),
+                new Claim(type: ClaimTypes.Role, value: user.Role.Name)
             };
 
             DateTime now = DateTime.Now;
 
-            DateTime accessTokenExpiry = now.Add(TimeSpan.FromMinutes(20));
+            DateTime accessTokenExpiry = now.Add(value: TimeSpan.FromMinutes(20));
 
             SecurityToken securityToken = new JwtSecurityToken(
                     issuer: _configuration["Application:Security:Authentication:Jwt:Issuer"],
@@ -91,7 +90,7 @@ namespace Application
                     expires: accessTokenExpiry,
                     signingCredentials: credentials);
 
-            string encodedToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
+            string encodedToken = new JwtSecurityTokenHandler().WriteToken(token: securityToken);
 
             return new AuthenticateResponse(
                 User: user.Guid,

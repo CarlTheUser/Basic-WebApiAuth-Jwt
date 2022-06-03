@@ -19,21 +19,21 @@ namespace Application.Authentication
         {
             try
             {
-                UserAccess? userAccess = await _userAccessByEmailquery.ExecuteAsync(credentials.Email, token);
+                UserAccess? userAccess = await _userAccessByEmailquery.ExecuteAsync(parameter: credentials.Email, token: token);
 
                 if (userAccess != null)
                 {
-                    if (userAccess.Password.Test(_configuration["Application:Security:Authentication:Peanuts"] + new string(credentials.Password)))
+                    if (userAccess.Password.Test(password: _configuration["Application:Security:Authentication:Peanuts"] + new string(credentials.Password)))
                     {
                         return AuthenticationResult.Ok(
-                            new AuthenticatedUser(
+                            user: new AuthenticatedUser(
                                 userAccess.Guid,
                                 userAccess.Email,
                                 userAccess.Role.Name));
                     }
                     else
                     {
-                        return AuthenticationResult.InvalidCredentials(userAccess.Email);
+                        return AuthenticationResult.InvalidCredentials(identifier: userAccess.Email);
                     }
                 }
                 else

@@ -20,13 +20,13 @@ namespace Application
 
         private readonly IRandomStringGenerator _stringGenerator;
 
-        private readonly IAsyncRepository<Guid, RefreshToken> _refreshTokenRepository;
+        private readonly IAsyncRepository<RefreshToken> _refreshTokenRepository;
 
         public AuthenticateRequestHandler(
             IConfiguration configuration, 
             IAuthentication<EmailPasswordAuthCredentials> authentication, 
             IRandomStringGenerator stringGenerator, 
-            IAsyncRepository<Guid, RefreshToken> refreshTokenRepository)
+            IAsyncRepository<RefreshToken> refreshTokenRepository)
         {
             _configuration = configuration;
             _authentication = authentication;
@@ -47,29 +47,29 @@ namespace Application
                     var refreshToken = RefreshToken.For(
                         user: user.Id,
                         lifespan: TimeSpan.Parse(_configuration["Application:Security:Authentication:RefreshToken:Lifespan"]),
-                        _stringGenerator,
-                        _configuration.GetValue<int>("Application:Security:Authentication:RefreshToken:Length"));
+                        generator: _stringGenerator,
+                        tokenLength: _configuration.GetValue<int>("Application:Security:Authentication:RefreshToken:Length"));
 
-                    await _refreshTokenRepository.SaveAsync(refreshToken, cancellationToken);
+                    await _refreshTokenRepository.SaveAsync(item: refreshToken, token: cancellationToken);
 
-                    SecurityKey symmetricKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Application:Security:Authentication:Jwt:SymmetricSecurityKey"]));
-                    SigningCredentials credentials = new(symmetricKey, SecurityAlgorithms.HmacSha256);
+                    SecurityKey symmetricKey = new SymmetricSecurityKey(key: Encoding.UTF8.GetBytes(_configuration["Application:Security:Authentication:Jwt:SymmetricSecurityKey"]));
+                    SigningCredentials credentials = new(key: symmetricKey, algorithm: SecurityAlgorithms.HmacSha256);
 
                     List<Claim> claims = new()
                     {
-                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                        new Claim(ClaimTypes.Email, user.Email),
-                        new Claim(ClaimTypes.Role, user.Role)
+                        new Claim(type: ClaimTypes.NameIdentifier, value: user.Id.ToString()),
+                        new Claim(type: ClaimTypes.Email, value: user.Email),
+                        new Claim(type: ClaimTypes.Role, value: user.Role)
                     };
 
                     DateTime now = DateTime.Now;
 
                     if(!TimeSpan.TryParse("Application:Security:Authentication:Jwt:Lifespan", out TimeSpan tokenLifespan))
                     {
-                        throw new ApplicationLogicException("Missing or invalid configuration @ Application:Security:Authentication:Jwt:Lifespan.");
+                        throw new ApplicationLogicException(message: "Missing or invalid configuration @ Application:Security:Authentication:Jwt:Lifespan.");
                     }
 
-                    DateTime accessTokenExpiry = now.Add(tokenLifespan);
+                    DateTime accessTokenExpiry = now.Add(value: tokenLifespan);
 
                     SecurityToken securityToken = new JwtSecurityToken(
                             issuer: _configuration["Application:Security:Authentication:Jwt:Issuer"],
@@ -78,7 +78,7 @@ namespace Application
                             expires: accessTokenExpiry,
                             signingCredentials: credentials);
 
-                    string encodedToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
+                    string encodedToken = new JwtSecurityTokenHandler().WriteToken(token: securityToken);
 
                     return new AuthenticateResponse(
                         User: user.Id,
@@ -88,11 +88,11 @@ namespace Application
                         RefreshTokenExpiry: refreshToken.Expiry);
 
                 case AuthenticationStatus.NotFound:
-                    throw new ApplicationLogicException("Account not found.");
+                    throw new ApplicationLogicException(message: "Account not found.");
                 case AuthenticationStatus.InvalidCredentials:
-                    throw new ApplicationLogicException("Wrong password.");
+                    throw new ApplicationLogicException(message: "Wrong password.");
                 default:
-                    throw new ApplicationLogicException("Unhandled Authentication Status");
+                    throw new ApplicationLogicException(message: "Unhandled Authentication Status");
             }
         }
     }
