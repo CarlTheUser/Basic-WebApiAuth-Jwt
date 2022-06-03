@@ -66,7 +66,7 @@ namespace Application
 
                     if(!TimeSpan.TryParse("Application:Security:Authentication:Jwt:Lifespan", out TimeSpan tokenLifespan))
                     {
-                        throw new ApplicationException("Missing or invalid configuration @ Application:Security:Authentication:Jwt:Lifespan.");
+                        throw new ApplicationLogicException("Missing or invalid configuration @ Application:Security:Authentication:Jwt:Lifespan.");
                     }
 
                     DateTime accessTokenExpiry = now.Add(tokenLifespan);
@@ -88,11 +88,11 @@ namespace Application
                         RefreshTokenExpiry: refreshToken.Expiry);
 
                 case AuthenticationStatus.NotFound:
-                    throw new ApplicationException("Account not found.");
+                    throw new ApplicationLogicException("Account not found.");
                 case AuthenticationStatus.InvalidCredentials:
-                    throw new ApplicationException("Wrong password.");
+                    throw new ApplicationLogicException("Wrong password.");
                 default:
-                    throw new ApplicationException("Unhandled Authentication Status");
+                    throw new ApplicationLogicException("Unhandled Authentication Status");
             }
         }
     }

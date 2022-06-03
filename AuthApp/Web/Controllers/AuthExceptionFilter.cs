@@ -10,7 +10,7 @@ namespace Web.Controllers
         {
             switch (context.Exception)
             {
-                case Application.ApplicationException ae:
+                case Application.ApplicationLogicException ae:
                     context.Result = new UnauthorizedObjectResult(new { ae.Message });
                     break;
                 default:

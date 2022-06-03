@@ -27,9 +27,9 @@ namespace Application
                     new RefreshTokenByUserValueParameter(request.User, request.token),
                     cancellationToken);
 
-            if (existingToken == null || existingToken.Expiry < DateTime.Now)
+            if (existingToken == null)
             {
-                throw new ApplicationException("Invalid token.");
+                throw new ApplicationLogicException("Invalid token.");
             }
 
             existingToken.Consume();

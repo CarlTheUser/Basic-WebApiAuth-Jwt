@@ -41,7 +41,7 @@ namespace Application
         {
             if(expiry < DateTime.Now)
             {
-                throw new ApplicationException($"Unable to create instance of {typeof(RefreshToken).Name} with {nameof(expiry)} of past date.");
+                throw new ApplicationLogicException($"Unable to create instance of {typeof(RefreshToken).Name} with {nameof(expiry)} of past date.");
             }
 
             Id = id;
@@ -55,8 +55,14 @@ namespace Application
         {
             if (_isConsumed)
             {
-                throw new ApplicationException("Cannot consume this token more than once.");
+                throw new ApplicationLogicException("Cannot consume this token more than once.");
             }
+
+            if (Expiry < DateTime.Now)
+            {
+                throw new ApplicationLogicException("Token already expired.");
+            }
+
             _isConsumed = true;
 
             _events.Add(new RefreshTokenConsumedDataEvent(Id));

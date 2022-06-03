@@ -46,16 +46,16 @@ namespace Application
 
             if (user == null)
             {
-                throw new ApplicationException("Cannot find user.");
+                throw new ApplicationLogicException("Cannot find user.");
             }
 
             RefreshToken? existingToken = await _refreshTokenByUserValueQuery.ExecuteAsync(
                     new RefreshTokenByUserValueParameter(user.Guid, request.Token),
                     cancellationToken);
 
-            if (existingToken == null || existingToken.Expiry < DateTime.Now)
+            if (existingToken == null)
             {
-                throw new ApplicationException("Invalid token.");
+                throw new ApplicationLogicException("Invalid token.");
             }
 
             existingToken.Consume();
