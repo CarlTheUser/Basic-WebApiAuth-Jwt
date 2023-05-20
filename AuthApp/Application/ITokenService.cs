@@ -80,7 +80,7 @@ namespace Application
 
                     SecurityToken securityToken = new JwtSecurityToken(
                             issuer: _configuration["Application:Security:Authentication:Jwt:Issuer"],
-                            audience: _configuration["Application:Security:Authentication:Jwt:Audience"],
+                            audience: "This Api",
                             claims: claims,
                             expires: accessTokenExpiry,
                             signingCredentials: signingCredentials);
@@ -99,7 +99,7 @@ namespace Application
                 case AuthenticationStatus.InvalidCredentials:
                     return Result.Fail<AuthenticateResponse?>("Wrong password.");
                 default:
-                    return Result.Fail<AuthenticateResponse?>("Unhandled Authentication Status");
+                    return Result.Fail<AuthenticateResponse?>("Unhandled Authentication Status.");
 
             }
         }
@@ -144,7 +144,9 @@ namespace Application
             {
                 return Result.Fail<AuthenticateResponse?>("An error occurred while finding user.");
             }
+
             var symmetricKey = new SymmetricSecurityKey(key: Encoding.UTF8.GetBytes(s: _configuration["Application:Security:Authentication:Jwt:SymmetricSecurityKey"]));
+
             var credentials = new SigningCredentials(
                 key: symmetricKey,
                 algorithm: SecurityAlgorithms.HmacSha256);
@@ -162,7 +164,7 @@ namespace Application
 
             SecurityToken securityToken = new JwtSecurityToken(
                     issuer: _configuration["Application:Security:Authentication:Jwt:Issuer"],
-                    audience: _configuration["Application:Security:Authentication:Jwt:Audience"],
+                    audience: "This Api",
                     claims: claims,
                     expires: accessTokenExpiry,
                     signingCredentials: credentials);

@@ -8,6 +8,16 @@ namespace Access.Models.Entities
 {
     public class RefreshToken : AggregateRoot
     {
+        #region Static Factory Methods
+
+        /// <summary>
+        /// Static factory method for creating a new <code>RefreshToken</code> object for a specified user.
+        /// </summary>
+        /// <param name="userAccess"></param>
+        /// <param name="lifespan"></param>
+        /// <param name="generator"></param>
+        /// <param name="tokenLength"></param>
+        /// <returns></returns>
         public static RefreshToken For(UserAccessId userAccess, TimeSpan lifespan, IRandomStringGenerator generator, int tokenLength)
         {
             DateTime now = DateTime.Now;
@@ -29,6 +39,8 @@ namespace Access.Models.Entities
 
             return token;
         }
+
+        #endregion
 
         public RefreshTokenId Id { get; }
         public UserAccessId IssuedTo { get; }

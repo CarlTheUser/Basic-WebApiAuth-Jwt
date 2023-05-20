@@ -20,7 +20,7 @@ using Web.Validators;
 static void ConfigureServicesDevelopment(WebApplicationBuilder builder, IServiceCollection services)
 {
     services.AddControllers();
-    
+
     services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
