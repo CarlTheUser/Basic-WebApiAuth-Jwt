@@ -1,39 +1,41 @@
-﻿using Access;
+﻿using Access.Models.Entities;
+using Access.Repositories;
 using Data.Common.Contracts;
-using Microsoft.Extensions.Configuration;
 
 namespace Application.Authentication
 {
     public class EmailPasswordAuthentication : IAuthentication<EmailPasswordAuthCredentials>
     {
-        private readonly IConfiguration _configuration;
-        private readonly IAsyncQuery<UserAccess?, string> _userAccessByEmailquery;
+        private readonly IUserAccessRepository _userAccessRepository;
+        private readonly IAsyncQuery<AuthenticatedUser?, Guid> _authenticatedUserByIdQuery;
 
-        public EmailPasswordAuthentication(IConfiguration configuration, IAsyncQuery<UserAccess?, string> userAccessByEmailquery)
+        public EmailPasswordAuthentication(IUserAccessRepository userAccessRepository, IAsyncQuery<AuthenticatedUser?, Guid> authenticatedUserByIdQuery)
         {
-            _configuration = configuration;
-            _userAccessByEmailquery = userAccessByEmailquery;
+            _userAccessRepository = userAccessRepository;
+            _authenticatedUserByIdQuery = authenticatedUserByIdQuery;
         }
 
-        public async Task<AuthenticationResult> AuthenticateAsync(EmailPasswordAuthCredentials credentials, CancellationToken token)
+        public async Task<AuthenticationResult> AuthenticateAsync(EmailPasswordAuthCredentials credentials, CancellationToken cancellationToken = default)
         {
             try
             {
-                UserAccess? userAccess = await _userAccessByEmailquery.ExecuteAsync(parameter: credentials.Email, token: token);
+                UserAccess? userAccess = await _userAccessRepository.FindAsync(
+                    specification: new UserAccessByEmailSpecification(Email: credentials.Email),
+                    cancellationToken: cancellationToken);
 
                 if (userAccess != null)
                 {
-                    if (userAccess.Password.Test(password: _configuration["Application:Security:Authentication:Peanuts"] + new string(credentials.Password)))
+                    if (userAccess.Password.Test(password: new string(credentials.Password)))
                     {
-                        return AuthenticationResult.Ok(
-                            user: new AuthenticatedUser(
-                                userAccess.Guid,
-                                userAccess.Email,
-                                userAccess.Role.Name));
+                        AuthenticatedUser? authenticatedUser = await _authenticatedUserByIdQuery.ExecuteAsync(
+                            parameter: userAccess.Id,
+                            cancellationToken: cancellationToken);
+
+                        return AuthenticationResult.Ok(user: authenticatedUser!);
                     }
                     else
                     {
-                        return AuthenticationResult.InvalidCredentials(identifier: userAccess.Email);
+                        return AuthenticationResult.InvalidCredentials(identifier: userAccess.Email.Value);
                     }
                 }
                 else

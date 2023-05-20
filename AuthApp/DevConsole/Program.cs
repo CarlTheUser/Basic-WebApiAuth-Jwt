@@ -1,38 +1,35 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using Access;
-using Data.Sql;
-using Data.Sql.Provider;
-using Infrastructure.Data.Access;
+using Access.Models.Entities;
+using Access.Models.Primitives;
+using Access.Models.ValueObjects;
+using Dapper;
+using Infrastructure.Data.Repositories;
+using System.Data.SqlClient;
 
-
-const string localConnectionString = @"Data Source='DESKTOP-U64U4KB\SQLEXPRESS';Initial Catalog=UserAccessManagementDb;User ID=sa;Password=password;";
-
+//const string localConnectionString = @"Data Source='.\SQLEXPRESS';Initial Catalog=UserAccessManagementDB;User ID=sa;Password=P@$$W0RD;Encrypt=True;TrustServerCertificate=True;";
+const string localConnectionString = @"Data Source='.\SQLEXPRESS';Initial Catalog=UserAccessManagement;User ID=sa;Password=P@$$W0RD;TrustServerCertificate=True;";
 static void InitializeUserAccess()
 {
-    Role administrator = new Role(GetAdministratorRole(), "User Administrator");
-
-    string serverPeanuts = "long vanguard map intermediary address sun honky mason";
-
     UserAccess userAccess = UserAccess.New(
         email: "qazzqc@foo.company",
-        role: administrator,
-        password: new SecurePassword(
-            password: serverPeanuts + "K1mD4hYun0528<3"));
+        roleId: new RoleId(GetAdministratorRole()),
+        password: new SecurePassword(password: "K1mD4hYun0528<3"));
 
-    var repository = new UserAccessRepository(localConnectionString);
+    var repository = new UserAccessRepository(
+
+        connectionString: localConnectionString,
+        commandTimeout: 300);
 
     repository.SaveAsync(userAccess, CancellationToken.None).Wait();
 }
 
 static Guid GetAdministratorRole()
 {
-    SqlServerProvider sqlServerProvider = new(localConnectionString);
+    using var connection = new SqlConnection(connectionString: localConnectionString);
+    
+    var guid = connection.ExecuteScalar<Guid?>(sql: "Select Id From AccessRoles Where [Description] = 'User Administrator'");
 
-    ISqlCaller caller = new SqlCaller(sqlServerProvider);
-
-    var guid = caller.ExecuteScalar("Select Id From AccessRoles Where [Description] = 'User Administrator' ");
-
-    return (Guid)(guid ?? throw new Exception("Run UserAccessManagementDb Creation.sql first"));
+    return guid ?? throw new Exception("Run UserAccessManagementDb Creation.sql first");
 }
 
 Console.WriteLine("Hello, World!");

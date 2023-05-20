@@ -54,3 +54,10 @@ Create Nonclustered Index Idx_RefreshTokens_CoversAll
 ON CurrentRefreshTokens ([User], Token)
 Include (Id,Issued,Expiry);
 
+Create Procedure DeleteExpiredRefreshTokens
+As
+Begin
+	Delete CRT 
+	From CurrentRefreshTokens CRT
+	Where CRT.Expiry <= GetDate() 
+End
